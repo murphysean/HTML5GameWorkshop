@@ -30,7 +30,7 @@ function MainController($scope,$http,version,hsep,gamesep,gcep){
 		bulletRate: 300};
 	$scope.gplus = function gplus(){
 		var url = "https://accounts.google.com/o/oauth2/auth?redirect_uri=";
-		url += "http://www.murphysean.com/asteroidsgame/oauth2.html";
+		url += "http://localhost:8080/asteroidsgame/oauth2.html";
 		url += "&response_type=token&client_id=" + "890582885836.apps.googleusercontent.com";
 		url += "&approval_prompt=force&scope="
 		url += "https://www.googleapis.com/auth/plus.me https://www.googleapis.com/auth/userinfo.profile&access_type=online";
@@ -175,6 +175,8 @@ function GameController($scope,$window){
 		// create a WebGL renderer, camera
 		// and a scene
 		$scope.renderer = new THREE.WebGLRenderer({canvas:canvas});
+		$scope.renderer.shadowMapEnabled = true;
+		$scope.renderer.shadowMapSoft = true;
 		$scope.camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
 		$scope.scene = new THREE.Scene();
 
@@ -186,15 +188,24 @@ function GameController($scope,$window){
 		$scope.camera.lookAt(new THREE.Vector3(200, 200, 0));
 		
 		// create a point light
-		var pointLight = new THREE.PointLight(0xFFFFFF);
-
+		var spotLight = new THREE.SpotLight(0xFFFFFF);
+		spotLight.shadowCameraFov = 65;
+		spotLight.shadowMapWidth = 1024;
+		spotLight.shadowMapHeight = 1024;
+		spotLight.castShadow = true;
+		spotLight.shadowDarkness = 0.5;
+		//spotLight.shadowCameraVisible = true;
 		// set its position
-		pointLight.position.x = 10;
-		pointLight.position.y = 50;
-		pointLight.position.z = 130;
+		spotLight.position.x = -750;
+		spotLight.position.y = -750;
+		spotLight.position.z = 0;
 
 		// add to the scene
-		$scope.scene.add(pointLight);
+		$scope.scene.add(spotLight);
+		
+		//Ambient Light
+		var ambientLight = new THREE.AmbientLight( 0x303030 ); // soft white light
+		$scope.scene.add(ambientLight);
 
 		// start the renderer
 		$scope.renderer.setSize(WIDTH, HEIGHT);
@@ -222,7 +233,7 @@ function GameController($scope,$window){
 	
 	$scope.spaceShipMaterial = null;
 	$scope.createSpaceShip = function createSpaceShip(){
-		var spaceShipShape = new CANNON.Box(new CANNON.Vec3(8,4,2));
+		var spaceShipShape = new CANNON.Box(new CANNON.Vec3(8,4,4));
 		var spaceShipBody = new CANNON.RigidBody($scope.gameConfig.spaceShipMass,spaceShipShape,$scope.spaceShipMaterial);
 		spaceShipBody.position.set(200,200,0);
 		spaceShipBody.linearDamping = $scope.gameConfig.spaceShipLinearDamping;
@@ -230,10 +241,14 @@ function GameController($scope,$window){
 		spaceShipBody.gameType = 1;
 		spaceShipBody.marked = false;
 		if($scope.scene){
-			var spaceShipRenderBody = new THREE.CubeGeometry(8, 4, 2, 1, 1, 1);
+			var spaceShipRenderBody = new THREE.CubeGeometry(8, 4, 4, 1, 1, 1);
 			var spaceShipRenderMaterial = new THREE.MeshLambertMaterial({color: 0xFF0000});
+			spaceShipRenderMaterial.ambient = new THREE.Color(0xFF0000);
+			spaceShipRenderMaterial.emissive = new THREE.Color(0xFF0000);
 			spaceShipBody.geom = new THREE.Mesh(spaceShipRenderBody, spaceShipRenderMaterial);
 			spaceShipBody.geom.useQuaternion = true;
+			spaceShipBody.geom.castShadow = true;
+			spaceShipBody.geom.receiveShadow = true;
 		}
 		return spaceShipBody;
 	};
@@ -269,8 +284,11 @@ function GameController($scope,$window){
 		if($scope.scene){
 			var asteroidRenderBody = new THREE.SphereGeometry(size);
 			var asteroidRenderMaterial = new THREE.MeshLambertMaterial({color: 0x00FF00});
+			asteroidRenderMaterial.ambient = new THREE.Color(0x00FF00);
 			asteroidBody.geom = new THREE.Mesh(asteroidRenderBody, asteroidRenderMaterial);
 			asteroidBody.geom.useQuaternion = true;
+			asteroidBody.geom.castShadow = true;
+			asteroidBody.geom.receiveShadow = true;
 		}
 		return asteroidBody;
 	};
@@ -492,7 +510,8 @@ function GameController($scope,$window){
 		}
 		return false;
 	};
-	$scope.doesAsteroidOverlapOtherAsteroid=function doesAsteroidOverlapOtherAsteroid(asteroid,asteroids){
+	
+	$scope.doesAsteroidOverlapOtherAsteroid = function doesAsteroidOverlapOtherAsteroid(asteroid,asteroids){
 		var attempts =0;
 		for(var i=0; i<asteroids.length; i++){
 			while((asteroid.position.x > asteroids[i].position.x-$scope.gameConfig.asteroidLargeRadius && asteroid.position.x < asteroids[i].position.x+$scope.gameConfig.asteroidLargeRadius) 
