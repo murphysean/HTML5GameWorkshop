@@ -1,0 +1,77 @@
+<!DOCTYPE HTML>
+<html ng-app="asteroids" itemscope itemtype="http://schema.org/Article">
+<head>
+	<title itemprop="name">HTML5 Asteroids</title>
+	<meta itemprop="description" content="A pure HTML5 remake of the 70's classic... Asteroids!">
+	<meta itemprop="image" content="http://www.murphysean.com/asteroidsgame/asteroids.png">
+	<link href="http://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" type="text/css">
+	<link href="css/asteroids.css" rel="stylesheet" type="text/css">
+	<script src="lib/cannon.js"></script>
+	<script src="http://threejs.org/build/three.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.1.4/angular.min.js"></script>
+	<script src="src/modules.js"></script>
+	<script src="src/controllers.js"></script>
+</head>
+<body>
+	<section ng-controller="MainController">
+		<article ng-show="showStart">
+			<h1>Welcome to the HTML5 Game Workshop</h1>
+			<p ng-hide="message">Welcome to Asteroids! In order to get started, login in via google plus. I use the new Google Plus API in order to track high scores, so don't worry about me spamming your wall or anything crazy like that. Only people that visit the site will see it.</p>
+			<p ng-hide="message">To play the game, use the arrow keys to steer and move. The spacebar will unleash a barrage of nuclear bullets. Be careful though, they are only active for a short while, requring you to get close and personal with the asteroids.</p>
+			<p ng-show="message">{{message}}</p>
+			<div ng-show="prevStats">Previous Stats
+				<ul>
+					<li>Score: {{prevStats.score}}</li>
+					<li>Bullets Fired: {{prevStats.bulletsFired}}</li>
+					<li>Wave Reached: {{prevStats.wave}}</li>
+					<li>Asteroids Destroyed: {{prevStats.largeAsteroidsDestroyed + prevStats.mediumAsteroidsDestroyed + prevStats.smallAsteroidsDestroyed}}
+						<ul>
+							<li>Large: {{prevStats.largeAsteroidsDestroyed}}</li>
+							<li>Medium: {{prevStats.mediumAsteroidsDestroyed}}</li>
+							<li>Small: {{prevStats.smallAsteroidsDestroyed}}</li>
+						</ul>
+					</li>
+				</ul>
+			</div>
+			<!--<p>Starting Health: <input ng-model="gameConfig.startingHealth" type="text"></p>
+			<p>Starting Wave: <input ng-model="gameConfig.startingWave" type="text"></p>-->
+			<button ng-click="gplus()" ng-hide="oauth">Sign in with Google Plus</button>
+			<button ng-click="onStart()" ng-show="person">Get Started {{person.displayName}}</button>
+			<div id=leaderboard>
+				<h4>LeaderBoard (TotalGames: {{gameCount}})</h4>
+				<p>Good luck beating these scores</p>
+				<div class="highscore" ng-repeat="score in highScores">
+					<img ng-src="{{score.userImage}}">
+					<span class="username">#{{$index + 1}} {{score.userName}}</span>
+					<span class="userscore">{{score.score}}</span>
+				</div>
+			</div>
+		</article>
+		<article id="gamearticle" ng-controller="GameController" ng-hide="showStart">
+			<canvas id="canvas" width="405" height="405" ng-click="onClickGameWorld($event)"></canvas>
+				<p id="wave">Wave: {{stats.wave}}</p>
+				<p id="score">Score: {{stats.score}}</p>
+				<p id="health">Health: {{health}}</p>
+			<!--<p>Asteroids Destroyed:
+				<ol>
+					<li>Large: {{stats.asteroidsDestroyed.large}}</li>
+					<li>Medium: {{stats.asteroidsDestroyed.medium}}</li>
+					<li>Small: {{stats.asteroidsDestroyed.small}}</li>
+				</ol>
+			</p>-->
+			<!--<p>Ship.x: {{playerShip.GetPosition().x}}, Ship.y: {{playerShip.GetPosition().y}}, Ship.angle: {{playerShip.GetAngle()}}</p>-->
+			<!--<p>SpaceShipThrust: <input ng-model="gameConfig.spaceShipThrust" type="text"></p>
+			<p>SpaceShipTorque: <input ng-model="gameConfig.spaceShipTorque" type="text"></p>-->
+			<!--<ul>
+				<li>Left: {{keys.left}}</li>
+				<li>Up: {{keys.up}}</li>
+				<li>Right: {{keys.right}}</li>
+				<li>Space: {{keys.space}}</li>
+			</ul>-->
+			<!--<ol>
+				<li ng-repeat="asteroid in asteroids">X: {{asteroid.GetPosition().x}} Y: {{asteroid.GetPosition().y}}</li>
+			</ol>-->
+		</article>
+	</section>
+</body>
+</html>

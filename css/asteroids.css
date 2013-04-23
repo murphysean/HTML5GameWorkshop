@@ -1,0 +1,60 @@
+html{
+	font-family: 'Roboto', sans-serif;
+}
+
+#leaderboard {
+	
+}
+
+.highscore {
+	border-radius: 5px;
+	border: 1px solid lightgray;
+	padding: 5px;
+	width: 256px;
+	position: relative;
+}
+
+.highscore > .username {
+	position: absolute;
+	top: 10px;
+	padding: 5px;
+}
+
+.highscore > .userscore {
+	position: absolute;
+	top: 32px;
+	padding-left: 10px;
+}
+
+#gamearticle {
+	position:relative;
+}
+
+#gamearticle > canvas{
+	background-color:#333333;
+}
+
+#gamearticle > #wave{
+	position:absolute;
+	color:green;
+	top:0;
+	left:180px;
+	margin-top: 0px;
+	margin-bottom: 0px;
+	font-size: 0.6em;
+}
+
+#gamearticle > #score{
+	position: absolute;
+	color:green;
+	top: 380px;
+	font-size: 0.6em;
+}
+
+#gamearticle > #health{
+	position: absolute;
+	color: green;
+	top: 380px;
+	left: 350px;
+	font-size: 0.6em;
+}

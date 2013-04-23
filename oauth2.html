@@ -1,0 +1,22 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<title>OAuth2 Callback</title>
+<script>
+function getOauth2Params(){
+	var oauth = new Object();
+	var queryString = window.location.hash.substring(1), regex = /([^&=]+)=([^&]*)/g, m;
+	while (m = regex.exec(queryString)) {
+		oauth[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
+	}
+	if(top.opener && top.opener.oauthcallback)
+		top.opener.oauthcallback(oauth);
+	top.close();
+}
+getOauth2Params();
+</script>
+</head>
+<body>
+	<p>Welcome Back</p>
+</body>
+</html>
