@@ -31,14 +31,14 @@ html{
 }
 
 #gamearticle > canvas{
-	background-color:#333333;
+	background-color:#111111;
 }
 
 #gamearticle > #wave{
 	position:absolute;
 	color:green;
 	top:0;
-	left:180px;
+	left:380px;
 	margin-top: 0px;
 	margin-bottom: 0px;
 	font-size: 0.6em;
@@ -47,14 +47,14 @@ html{
 #gamearticle > #score{
 	position: absolute;
 	color:green;
-	top: 380px;
+	top: 770px;
 	font-size: 0.6em;
 }
 
 #gamearticle > #health{
 	position: absolute;
 	color: green;
-	top: 380px;
-	left: 350px;
+	top: 770px;
+	left: 738px;
 	font-size: 0.6em;
 }

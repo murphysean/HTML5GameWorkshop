@@ -9,7 +9,7 @@ function MainController($scope,$http,version,hsep,gamesep,gcep){
 		spaceShipLinearDamping: 0.2,
 		spaceShipMass: 10,
 		spaceShipThrust: 600,
-		spaceShipTorque: 500,
+		spaceShipTorque: 1200,
 		spaceShipAsteroidDamage: 25,
 		asteroidExplodeVelocity: 40,
 		asteroidLargePoints: 105,
@@ -107,10 +107,11 @@ function GameController($scope,$window){
 		$scope.spaceShipMaterial = null;
 		$scope.asteroidMaterial = null;
 		$scope.bulletMaterial = null;
-	}
+	};
 	
 	$scope.$on('revUp', function(event){
 		$scope.resetWorld();
+		$scope.initializeThree();
 		$scope.initializePhysics();
 		//Set up animation
 		$scope.gameInProgress = true;
@@ -162,6 +163,43 @@ function GameController($scope,$window){
 	$window.onkeydown = $scope.onKeyDown;
 	$window.onkeyup = $scope.onKeyUp;
 	
+	$scope.initializeThree = function(){
+		// set the scene size
+		var WIDTH = 800, HEIGHT = 800;
+
+		// set some camera attributes
+		var VIEW_ANGLE = 80, ASPECT = WIDTH / HEIGHT, NEAR = 0.1, FAR = 10000;
+		
+		var canvas = document.getElementById("canvas");
+
+		// create a WebGL renderer, camera
+		// and a scene
+		$scope.renderer = new THREE.WebGLRenderer({canvas:canvas});
+		$scope.camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
+		$scope.scene = new THREE.Scene();
+
+		// add the camera to the scene
+		$scope.scene.add($scope.camera);
+		$scope.camera.position.x = 200;
+		$scope.camera.position.y = 200;
+		$scope.camera.position.z = 250;
+		$scope.camera.lookAt(new THREE.Vector3(200, 200, 0));
+		
+		// create a point light
+		var pointLight = new THREE.PointLight(0xFFFFFF);
+
+		// set its position
+		pointLight.position.x = 10;
+		pointLight.position.y = 50;
+		pointLight.position.z = 130;
+
+		// add to the scene
+		$scope.scene.add(pointLight);
+
+		// start the renderer
+		$scope.renderer.setSize(WIDTH, HEIGHT);
+	};
+	
 	$scope.initializePhysics = function(){
 		$scope.world = new CANNON.World();
 		$scope.world.gravity.set(0,0,0);
@@ -178,17 +216,25 @@ function GameController($scope,$window){
 		$scope.world.addContactMaterial(a_b_cm);
 		$scope.spaceShip = $scope.createSpaceShip();
 		$scope.world.add($scope.spaceShip);
+		if($scope.scene)
+			$scope.scene.add($scope.spaceShip.geom);
 	};
 	
 	$scope.spaceShipMaterial = null;
 	$scope.createSpaceShip = function createSpaceShip(){
-		var spaceShipShape = new CANNON.Box(new CANNON.Vec3(4,2,1));
+		var spaceShipShape = new CANNON.Box(new CANNON.Vec3(8,4,2));
 		var spaceShipBody = new CANNON.RigidBody($scope.gameConfig.spaceShipMass,spaceShipShape,$scope.spaceShipMaterial);
 		spaceShipBody.position.set(200,200,0);
 		spaceShipBody.linearDamping = $scope.gameConfig.spaceShipLinearDamping;
 		spaceShipBody.angularDamping = $scope.gameConfig.spaceShipAngularDamping;
 		spaceShipBody.gameType = 1;
 		spaceShipBody.marked = false;
+		if($scope.scene){
+			var spaceShipRenderBody = new THREE.CubeGeometry(8, 4, 2, 1, 1, 1);
+			var spaceShipRenderMaterial = new THREE.MeshLambertMaterial({color: 0xFF0000});
+			spaceShipBody.geom = new THREE.Mesh(spaceShipRenderBody, spaceShipRenderMaterial);
+			spaceShipBody.geom.useQuaternion = true;
+		}
 		return spaceShipBody;
 	};
 	
@@ -220,6 +266,12 @@ function GameController($scope,$window){
 			asteroidBody.angularDamping = 0.01;
 		}
 		asteroidBody.marked = false;
+		if($scope.scene){
+			var asteroidRenderBody = new THREE.SphereGeometry(size);
+			var asteroidRenderMaterial = new THREE.MeshLambertMaterial({color: 0x00FF00});
+			asteroidBody.geom = new THREE.Mesh(asteroidRenderBody, asteroidRenderMaterial);
+			asteroidBody.geom.useQuaternion = true;
+		}
 		return asteroidBody;
 	};
 	
@@ -229,13 +281,19 @@ function GameController($scope,$window){
 		if($scope.bullets.length > 0){
 			bulletBody = $scope.bullets.pop();
 		}else{
-			var bulletShape = new CANNON.Sphere(0.5);
+			var bulletShape = new CANNON.Sphere(1);
 			bulletBody = new CANNON.RigidBody(10, bulletShape, $scope.bulletMaterial);
 			bulletBody.gameType = 2;
 		}
 		bulletBody.marked = false;
 		bulletBody.linearDamping = 0;
 		bulletBody.angularDamping = 0;
+		if($scope.scene){
+			var bulletRenderBody = new THREE.SphereGeometry(1);
+			var bulletRenderMaterial = new THREE.MeshLambertMaterial({color: 0xFFFFFF});
+			bulletBody.geom = new THREE.Mesh(bulletRenderBody, bulletRenderMaterial);
+			bulletBody.geom.useQuaternion = true;
+		}
 		return bulletBody;
 	};
 	
@@ -252,7 +310,8 @@ function GameController($scope,$window){
 			//Game Logic
 			$scope.gameLogic(time);
 			//Draw Scene
-			$scope.render2d(time);
+			//$scope.render2d(time);
+			$scope.render3d(time);
 			//Keep track of when I last updated
 			$scope.lastUpdate = time;
 			//Trigger Angular Updates once a second
@@ -274,10 +333,10 @@ function GameController($scope,$window){
 			$scope.spaceShip.force.y = $scope.angleVec.y * $scope.gameConfig.spaceShipThrust;
 		}
 		if($scope.keys.left){
-			$scope.spaceShip.tau.z = -$scope.gameConfig.spaceShipTorque;
+			$scope.spaceShip.tau.z = $scope.gameConfig.spaceShipTorque;
 		}
 		if($scope.keys.right){
-			$scope.spaceShip.tau.z = $scope.gameConfig.spaceShipTorque;
+			$scope.spaceShip.tau.z = -$scope.gameConfig.spaceShipTorque;
 		}
 		if($scope.keys.space){
 			if((time - $scope.lastBulletFired) > $scope.gameConfig.bulletRate){
@@ -287,9 +346,11 @@ function GameController($scope,$window){
 				bullet.created = time;
 				
 				//Get position and vel for new bullet
-				bullet.position.set($scope.spaceShip.position.x + ($scope.angleVec.x * 5),$scope.spaceShip.position.y + ($scope.angleVec.y * 5),0);
+				bullet.position.set($scope.spaceShip.position.x + ($scope.angleVec.x * 10),$scope.spaceShip.position.y + ($scope.angleVec.y * 10),0);
 				bullet.velocity.set($scope.spaceShip.velocity.x + ($scope.angleVec.x * $scope.gameConfig.bulletSpeed), $scope.spaceShip.velocity.y + ($scope.angleVec.y * $scope.gameConfig.bulletSpeed),0);
 				$scope.world.add(bullet);
+				if($scope.scene)
+					$scope.scene.add(bullet.geom);
 				$scope.lastBulletFired = time;
 				$scope.stats.bulletsFired++;
 			}
@@ -365,6 +426,8 @@ function GameController($scope,$window){
 			if(body.gameType == 2){
 				if(body.marked == true || time - body.created > $scope.gameConfig.bulletLife){
 					$scope.world.remove(body);
+					if($scope.scene)
+						$scope.scene.remove(body.geom);
 					--i;
 					$scope.bullets.push(body);
 					continue;
@@ -373,12 +436,18 @@ function GameController($scope,$window){
 			if(body.gameType == 3){
 				if(body.marked == true){
 					$scope.world.remove(body);
+					if($scope.scene)
+						$scope.scene.remove(body.geom);
 					--i;
 					$scope.breakUpAsteroid(body);
 					continue;
 				}else{
 					asteroidsLeft++;
 				}
+			}
+			if($scope.scene){
+				body.position.copy(body.geom.position);
+				body.quaternion.copy(body.geom.quaternion);
 			}
 		}
 		
@@ -398,6 +467,8 @@ function GameController($scope,$window){
 				asteroid.appeared= time;
 				asteroids.push(asteroid);
 				$scope.world.add(asteroid);
+				if($scope.scene)
+					$scope.scene.add(asteroid.geom);
 			}
 			$scope.$apply();
 		}
@@ -482,9 +553,17 @@ function GameController($scope,$window){
 		br.velocity.set(velx + (Math.random() * $scope.gameConfig.asteroidExplodeVelocity),
 			vely + (Math.random() * -$scope.gameConfig.asteroidExplodeVelocity), 0);
 		$scope.world.add(tl);
+		if($scope.scene)
+			$scope.scene.add(tl.geom);
 		$scope.world.add(bl);
+		if($scope.scene)
+			$scope.scene.add(bl.geom);
 		$scope.world.add(tr);
+		if($scope.scene)
+			$scope.scene.add(tr.geom);
 		$scope.world.add(br);
+		if($scope.scene)
+			$scope.scene.add(br.geom);
 	};
 	
 	$scope.render2d = function render2d(time){
@@ -534,6 +613,10 @@ function GameController($scope,$window){
 				context.stroke();
 			}
 		}
+	};
+	
+	$scope.render3d = function render3d(time){
+		$scope.renderer.render($scope.scene, $scope.camera);
 	};
 	
 	$scope.onClickGameWorld = function(){
