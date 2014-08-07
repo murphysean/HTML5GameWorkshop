@@ -1,4 +1,5 @@
 function MainController($scope,$http,version,hsep,gamesep,gcep){
+	
 	$scope.prevStats = null;
 	$scope.message = "";
 	$scope.showStart = true;
@@ -28,24 +29,28 @@ function MainController($scope,$http,version,hsep,gamesep,gcep){
 		bulletSpeed: 200,
 		bulletLife: 1000,
 		bulletRate: 300};
-	$scope.gplus = function gplus(){
-		var url = "https://accounts.google.com/o/oauth2/auth?redirect_uri=";
-		url += "http://localhost:8080/asteroidsgame/oauth2.html";
-		url += "&response_type=token&client_id=" + "890582885836.apps.googleusercontent.com";
-		url += "&approval_prompt=force&scope="
-		url += "https://www.googleapis.com/auth/plus.me https://www.googleapis.com/auth/userinfo.profile&access_type=online";
-		//Open G Plus Window
-		var win = window.open(url,"_blank","menubar=no,toolbar=no");
-		window.oauthcallback = $scope.oauthSuccess;
-	};
-	$scope.oauthSuccess = function haveToken(oauth){
+	
+	$scope.oauthSuccess = function oauthSuccess(oauth){
+		if(!oauth.access_token){
+			//alert('No Access Token');
+			return;
+		}
+		console.log(oauth.access_token);
 		$scope.oauth = oauth;
-		$http.get('https://www.googleapis.com/plus/v1/people/me?access_token=' + oauth.access_token).success(function personSuccess(data){
+		$scope.getLeaderBoard();
+		$scope.getGameAchievements();
+		$http.get('https://www.googleapis.com/games/v1/players/me?access_token=' + oauth.access_token).success(function personSuccess(data){
 			$scope.person = data;
 			$scope.onStart();
+			$scope.$apply();
 		});
+		/*$http.get('https://www.googleapis.com/plus/v1/people/me?access_token=' + oauth.access_token).success(function personSuccess(data){
+			$scope.person = data;
+			$scope.onStart();
+		});*/
 		$scope.$apply();
 	};
+	window.signinCallback = $scope.oauthSuccess;
 	
 	$scope.onStart = function(){
 		$scope.showStart = false;
@@ -55,39 +60,98 @@ function MainController($scope,$http,version,hsep,gamesep,gcep){
 	$scope.$on('gameOver',function(event, stats){
 		$scope.prevStats = stats;
 		$scope.submitGame(stats);
-		if(stats.score > $scope.highScores[0].score){
-			$scope.message = "Congratulations, your score " + stats.score + " bested " + $scope.highScores[0].userName + "'s score, " + $scope.highScores[0].score + ".";
-		}else if(stats.score > $scope.highScores[$scope.highScores.length-1].score){
-			$scope.message = "Bummer, a score of " + stats.score + " really wasn't great. Compared to " + $scope.highScores[0].userName + "'s amazing " + $scope.highScores[0].score + " score it is severly lacking. However, feel a bit of joy, you did happen to get on the leaderboard for now.";
-		}else{
-			$scope.message = "Wow, your score was just horrible, not even worth telling you how bad, cause it was that bad. Maybe next time";
-		}
 		$scope.showStart = true;
 	});
 	
 	$scope.submitGame = function submitGame(game){
-		game.version = version;
-		game.userId = $scope.person.id;
-		game.userName = $scope.person.displayName;
-		game.userImage = $scope.person.image.url;
-		game.createDate = new Date();
-		$http.post(gamesep,game).success(function submitGameSuccess(data){
+		$http.post('https://www.googleapis.com/games/v1/leaderboards/CgkIxLjbxtMaEAIQCw/scores?score='+game.score,null,{'headers':{'Authorization':'Bearer ' + $scope.oauth.access_token}}).success(function submitScoreSuccess(data){
 			$scope.getLeaderBoard();
 		}).error(function submitGameError(data){
 			alert("Dag Yo");
 		});
+		
+		$http.post('https://www.googleapis.com/games/v1/achievements/CgkIxLjbxtMaEAIQAQ/unlock',null,{'headers':{'Authorization':'Bearer ' + $scope.oauth.access_token}}).success(function submitFirstGameAchSuccess(data){
+			if(data.newlyUnlocked)
+				alert("Congrats On Your First Game!");
+		});
+		
+		//Also Unlock Achievements
+		if(game.wave >= 1)
+			$http.post('https://www.googleapis.com/games/v1/achievements/CgkIxLjbxtMaEAIQAg/unlock',null,{'headers':{'Authorization':'Bearer ' + $scope.oauth.access_token}}).success(function submitWave1Success(data){
+				if(data.newlyUnlocked)
+					alert("Congrats On Unlocking Wave 1!");
+			});
+		if(game.wave >= 2)
+			$http.post('https://www.googleapis.com/games/v1/achievements/CgkIxLjbxtMaEAIQAw/unlock',null,{'headers':{'Authorization':'Bearer ' + $scope.oauth.access_token}}).success(function submitWave1Success(data){
+				if(data.newlyUnlocked)
+					alert("Congrats On Unlocking Wave 2!");
+			});
+		if(game.wave >= 3)
+			$http.post('https://www.googleapis.com/games/v1/achievements/CgkIxLjbxtMaEAIQBA/unlock',null,{'headers':{'Authorization':'Bearer ' + $scope.oauth.access_token}}).success(function submitWave1Success(data){
+				if(data.newlyUnlocked)
+					alert("Congrats On Unlocking Wave 3!");
+			});
+		if(game.wave >= 4)
+			$http.post('https://www.googleapis.com/games/v1/achievements/CgkIxLjbxtMaEAIQBQ/unlock',null,{'headers':{'Authorization':'Bearer ' + $scope.oauth.access_token}}).success(function submitWave1Success(data){
+				if(data.newlyUnlocked)
+					alert("Congrats On Unlocking Wave 4!");
+			});
+		if(game.wave >= 5)
+			$http.post('https://www.googleapis.com/games/v1/achievements/CgkIxLjbxtMaEAIQBg/unlock',null,{'headers':{'Authorization':'Bearer ' + $scope.oauth.access_token}}).success(function submitWave1Success(data){
+				if(data.newlyUnlocked)
+					alert("Congrats On Unlocking Wave 5!");
+			});
+		if(game.wave >= 6)
+			$http.post('https://www.googleapis.com/games/v1/achievements/CgkIxLjbxtMaEAIQBw/unlock',null,{'headers':{'Authorization':'Bearer ' + $scope.oauth.access_token}}).success(function submitWave1Success(data){
+				if(data.newlyUnlocked)
+					alert("Congrats On Unlocking Wave 6!");
+			});
+		if(game.wave >= 7)
+			$http.post('https://www.googleapis.com/games/v1/achievements/CgkIxLjbxtMaEAIQCA/unlock',null,{'headers':{'Authorization':'Bearer ' + $scope.oauth.access_token}}).success(function submitWave1Success(data){
+				if(data.newlyUnlocked)
+					alert("Congrats On Unlocking Wave 7!");
+			});
+		if(game.wave >= 8)
+			$http.post('https://www.googleapis.com/games/v1/achievements/CgkIxLjbxtMaEAIQCQ/unlock',null,{'headers':{'Authorization':'Bearer ' + $scope.oauth.access_token}}).success(function submitWave1Success(data){
+				if(data.newlyUnlocked)
+					alert("Congrats On Unlocking Wave 8!");
+			});
+		if(game.wave >= 9)
+			$http.post('https://www.googleapis.com/games/v1/achievements/CgkIxLjbxtMaEAIQCg/unlock',null,{'headers':{'Authorization':'Bearer ' + $scope.oauth.access_token}}).success(function submitWave1Success(data){
+				if(data.newlyUnlocked)
+					alert("Congrats On Unlocking Wave 9!");
+			});
+			
+		$scope.getMyAchievements();
 	};
 	
 	$scope.getLeaderBoard = function getLeaderBoard(){
-		$http.get(hsep + version).success(function highScoresSuccess(data){
-			$scope.highScores = data;
-		});
-		$http.get(gcep + version).success(function gameCountSuccess(data){
-			$scope.gameCount = data;
+		$http.get('https://www.googleapis.com/games/v1/leaderboards/CgkIxLjbxtMaEAIQCw/scores/SOCIAL?timeSpan=WEEKLY',{'headers':{'Authorization':'Bearer ' + $scope.oauth.access_token}}).success(function highScoresSuccess(data){
+			$scope.gameCount = data.numScores;
+			$scope.highScores = data.items;
 		});
 	};
 	
-	$scope.getLeaderBoard();
+	$scope.getGameAchievements = function getAchievements(){
+		$http.get('https://www.googleapis.com/games/v1/achievements',{'headers':{'Authorization':'Bearer ' + $scope.oauth.access_token}}).success(function gameAchievementSuccess(data){
+			$scope.achievements = data.items;
+			$scope.getMyAchievements();
+		});
+	};
+	
+	$scope.getMyAchievements = function getMyAchievements(){
+		$http.get('https://www.googleapis.com/games/v1/players/me/achievements',{'headers':{'Authorization':'Bearer ' + $scope.oauth.access_token}}).success(function myAchievementSuccess(data){
+			for(var i = 0; i < data.items.length; i++){
+				//Search through and find matching achievement and update its props
+				for(var j = 0; j < $scope.achievements.length; j++){
+					if(data.items[i].id == $scope.achievements[j].id){
+						$scope.achievements[j].achievementState = data.items[i].achievementState;
+						break;
+					}
+				}
+			}
+		});
+	}
 }
 
 function GameController($scope,$window){
@@ -246,7 +310,7 @@ function GameController($scope,$window){
 			spaceShipRenderMaterial.ambient = new THREE.Color(0xFF0000);
 			spaceShipRenderMaterial.emissive = new THREE.Color(0xFF0000);
 			spaceShipBody.geom = new THREE.Mesh(spaceShipRenderBody, spaceShipRenderMaterial);
-			spaceShipBody.geom.useQuaternion = true;
+			//spaceShipBody.geom.useQuaternion = true;
 			spaceShipBody.geom.castShadow = true;
 			spaceShipBody.geom.receiveShadow = true;
 		}
@@ -286,7 +350,7 @@ function GameController($scope,$window){
 			var asteroidRenderMaterial = new THREE.MeshLambertMaterial({color: 0x00FF00});
 			asteroidRenderMaterial.ambient = new THREE.Color(0x00FF00);
 			asteroidBody.geom = new THREE.Mesh(asteroidRenderBody, asteroidRenderMaterial);
-			asteroidBody.geom.useQuaternion = true;
+			//asteroidBody.geom.useQuaternion = true;
 			asteroidBody.geom.castShadow = true;
 			asteroidBody.geom.receiveShadow = true;
 		}
@@ -310,7 +374,7 @@ function GameController($scope,$window){
 			var bulletRenderBody = new THREE.SphereGeometry(1);
 			var bulletRenderMaterial = new THREE.MeshLambertMaterial({color: 0xFFFFFF});
 			bulletBody.geom = new THREE.Mesh(bulletRenderBody, bulletRenderMaterial);
-			bulletBody.geom.useQuaternion = true;
+			//bulletBody.geom.useQuaternion = true;
 		}
 		return bulletBody;
 	};

@@ -2,13 +2,14 @@
 <html ng-app="asteroids" itemscope itemtype="http://schema.org/Article">
 <head>
 	<title itemprop="name">HTML5 Asteroids</title>
+	<meta charset="UTF-8">
 	<meta itemprop="description" content="A pure HTML5 remake of the 70's classic... Asteroids!">
 	<meta itemprop="image" content="http://www.murphysean.com/asteroidsgame/asteroids.png">
 	<link href="http://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" type="text/css">
 	<link href="css/asteroids.css" rel="stylesheet" type="text/css">
 	<script src="lib/cannon.js"></script>
 	<script src="http://threejs.org/build/three.min.js"></script>
-	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.1.4/angular.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.21/angular.min.js"></script>
 	<script src="src/modules.js"></script>
 	<script src="src/controllers.js"></script>
 </head>
@@ -35,15 +36,34 @@
 			</div>
 			<!--<p>Starting Health: <input ng-model="gameConfig.startingHealth" type="text"></p>
 			<p>Starting Wave: <input ng-model="gameConfig.startingWave" type="text"></p>-->
-			<button ng-click="gplus()" ng-hide="oauth">Sign in with Google Plus</button>
+			<span id="signinButton" ng-hide="oauth">
+				<span
+					class="g-signin"
+					data-callback="signinCallback"
+					data-clientid="915781639236-u90ud6dagj7a4q2u32bftbm8oop0iqre.apps.googleusercontent.com"
+					data-cookiepolicy="single_host_origin"
+					data-requestvisibleactions="http://schema.org/AddAction"
+					data-scope="https://www.googleapis.com/auth/plus.login https://www.googleapis.com/auth/games">
+				</span>
+			</span>
 			<button ng-click="onStart()" ng-show="person">Get Started {{person.displayName}}</button>
 			<div id=leaderboard>
 				<h4>LeaderBoard (TotalGames: {{gameCount}})</h4>
 				<p>Good luck beating these scores</p>
 				<div class="highscore" ng-repeat="score in highScores">
-					<img ng-src="{{score.userImage}}">
-					<span class="username">#{{$index + 1}} {{score.userName}}</span>
-					<span class="userscore">{{score.score}}</span>
+					<img ng-src="{{score.player.avatarImageUrl}}?sz=100">
+					<span class="username">#{{$index + 1}} {{score.player.displayName}}</span>
+					<span class="userscore">{{score.formattedScore}}</span>
+				</div>
+			</div>
+			<div id=achievements>
+				<h4>Achievements</h4>
+				<p>Here's your progress through the game achievements</p>
+				<div class="achievement" ng-repeat="achievement in achievements">
+					<img ng-show="achievement.achievementState == 'REVEALED'" ng-src="{{achievement.revealedIconUrl}}" height="80" width="80">
+					<img ng-show="achievement.achievementState == 'UNLOCKED'"ng-src="{{achievement.unlockedIconUrl}}"  height="80" width="80">
+					<span class="title">{{achievement.name}} - <span ng-show="achievement.achievementState == 'UNLOCKED'">UNLOCKED</span><span ng-show="achievement.achievementState == 'REVEALED'">GET ER DONE</span></span>
+					<span class="description">{{achievement.description}}</span>
 				</div>
 			</div>
 		</article>
@@ -73,5 +93,13 @@
 			</ol>-->
 		</article>
 	</section>
+<!-- Place this asynchronous JavaScript just before your </body> tag -->
+<script type="text/javascript">
+(function() {
+var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+po.src = 'https://apis.google.com/js/client:plusone.js';
+var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+})();
+</script>
 </body>
 </html>
