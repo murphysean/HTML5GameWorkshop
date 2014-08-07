@@ -126,7 +126,7 @@ function MainController($scope,$http,version,hsep,gamesep,gcep){
 	};
 	
 	$scope.getLeaderBoard = function getLeaderBoard(){
-		$http.get('https://www.googleapis.com/games/v1/leaderboards/CgkIxLjbxtMaEAIQCw/scores/SOCIAL?timeSpan=WEEKLY',{'headers':{'Authorization':'Bearer ' + $scope.oauth.access_token}}).success(function highScoresSuccess(data){
+		$http.get('https://www.googleapis.com/games/v1/leaderboards/CgkIxLjbxtMaEAIQCw/scores/PUBLIC?timeSpan=WEEKLY',{'headers':{'Authorization':'Bearer ' + $scope.oauth.access_token}}).success(function highScoresSuccess(data){
 			$scope.gameCount = data.numScores;
 			$scope.highScores = data.items;
 		});
