@@ -122,6 +122,61 @@ function MainController($scope,$http,version,hsep,gamesep,gcep){
 					alert("Congrats On Unlocking Wave 9!");
 			});
 			
+		//Submit in game count achievments
+		$http.post('https://www.googleapis.com/games/v1/achievements/CgkIxLjbxtMaEAIQDw/increment?stepsToIncrement=' + game.wave,null,{'headers':{'Authorization':'Bearer ' + $scope.oauth.access_token}}).success(function submitWaveCountSuccess(data){
+			if(data.newlyUnlocked)
+				alert("Congrats On Waving Through!");
+		});
+		var asteroidsDestroyed = game.smallAsteroidsDestroyed + game.mediumAsteroidsDestroyed + game.largeAsteroidsDestroyed;
+		$http.post('https://www.googleapis.com/games/v1/achievements/CgkIxLjbxtMaEAIQEA/increment?stepsToIncrement=' + asteroidsDestroyed,null,{'headers':{'Authorization':'Bearer ' + $scope.oauth.access_token}}).success(function submitAsteroidsDestroyedCountSuccess(data){
+			if(data.newlyUnlocked)
+				alert("Congrats On Destroying a Plethora of Asteroids!");
+		});
+		
+		$http.post('https://www.googleapis.com/games/v1/achievements/CgkIxLjbxtMaEAIQEQ/increment?stepsToIncrement=' + game.bulletsFired,null,{'headers':{'Authorization':'Bearer ' + $scope.oauth.access_token}}).success(function submitBulletCountSuccess(data){
+			if(data.newlyUnlocked)
+				alert("Congrats On Firing Squadrons of Bullets!");
+		});
+		
+		//Submit events
+		var event = new Object();
+		event.kind = "games#eventRecordRequest";
+		event.requestId = 1;
+		event.currentTimeMillis = new Date().getTime();
+		var eventPeriod = new Object();
+		eventPeriod.kind = "games#eventPeriodUpdate";
+		eventPeriod.updates = new Array();
+		var timePeriod = new Object();
+		timePeriod.kind = "games#eventPeriodRange";
+		timePeriod.periodStartMillis = game.startDate.getTime();
+		timePeriod.periodEndMillis = game.endDate.getTime();
+		eventPeriod.timePeriod = timePeriod;
+		var timeUpdate = new Object();
+		timeUpdate.kind = "games#eventUpdateRequest";
+		timeUpdate.definitionId = "CgkIxLjbxtMaEAIQDg";
+		timeUpdate.updateCount = game.endDate.getTime() - game.startDate.getTime();
+		eventPeriod.updates.push(timeUpdate);
+		var waveUpdate = new Object();
+		waveUpdate.kind = "games#eventUpdateRequest";
+		waveUpdate.definitionId = "CgkIxLjbxtMaEAIQEg";
+		waveUpdate.updateCount = game.wave;
+		eventPeriod.updates.push(waveUpdate);
+		var bulletUpdate = new Object();
+		bulletUpdate.kind = "games#eventUpdateRequest";
+		bulletUpdate.definitionId = "CgkIxLjbxtMaEAIQDA";
+		bulletUpdate.updateCount = game.bulletsFired;
+		eventPeriod.updates.push(bulletUpdate);
+		var asteroidUpdate = new Object();
+		asteroidUpdate.kind = "games#eventUpdateRequest";
+		asteroidUpdate.definitionId = "CgkIxLjbxtMaEAIQDQ";
+		asteroidUpdate.updateCount = asteroidsDestroyed;
+		eventPeriod.updates.push(asteroidUpdate);
+		event.timePeriods = new Array(eventPeriod);
+		
+		$http.post('https://www.googleapis.com/games/v1/events',event,{'headers':{'Authorization':'Bearer ' + $scope.oauth.access_token}}).success(function submitEventSuccess(data){
+			console.log(data);
+		});
+		
 		$scope.getMyAchievements();
 	};
 	
@@ -150,6 +205,7 @@ function MainController($scope,$http,version,hsep,gamesep,gcep){
 					}
 				}
 			}
+			$scope.$apply();
 		});
 	}
 }
@@ -160,7 +216,7 @@ function GameController($scope,$window){
 	$scope.angleVec = new CANNON.Vec3(0,0,0);
 	
 	$scope.resetWorld = function(){
-		$scope.stats = {score:0, bulletsFired: 0, wave:$scope.gameConfig.startingWave,largeAsteroidsDestroyed:0,mediumAsteroidsDestroyed:0, smallAsteroidsDestroyed:0};
+		$scope.stats = {score:0, startDate:new Date(),bulletsFired: 0, wave:$scope.gameConfig.startingWave,largeAsteroidsDestroyed:0,mediumAsteroidsDestroyed:0, smallAsteroidsDestroyed:0};
 		$scope.health = $scope.gameConfig.startingHealth;
 		$scope.asteroids = new Object();
 		$scope.asteroids[$scope.gameConfig.asteroidLargeRadius] = new Array();
@@ -556,6 +612,7 @@ function GameController($scope,$window){
 		}
 		//Game ending condition... health has expired
 		if($scope.health <= 0){
+			$scope.stats.endDate = new Date();
 			var stats = $scope.stats;
 			$scope.resetWorld();
 			$scope.gameInProgress = false;
